@@ -52,3 +52,53 @@ theorem MyInt.ofMyNat_eq_zero {n : MyNat} : (n : MyInt) = 0 ↔ n = 0 := by
 theorem MyInt.ofNat_add (m n : MyNat) :
   ↑(m + n) = (m : MyInt) + (n : MyInt) := by
   rfl
+
+/-- 整数の広義順序 -/
+def MyInt.le (m n : MyInt) : Prop :=
+  ∃ k : MyNat, m + ↑k = n
+
+instance : LE MyInt where
+  le := MyInt.le
+
+@[notation_simp]
+theorem MyInt.le_def (m n : MyInt) : m ≤ n ↔ ∃ k : MyNat, m + ↑k = n := by
+  rfl
+
+def MyInt.lt (m n : MyInt) : Prop :=
+  m ≤ n ∧ ¬ n ≤ m
+
+instance : LT MyInt where
+  lt := MyInt.lt
+
+@[notation_simp]
+theorem MyInt.lt_def (a b : MyInt) : a < b ↔ a ≤ b ∧ ¬ b ≤ a := by
+  rfl
+
+
+@[refl]
+theorem MyInt.le_refl (m : MyInt) : m ≤ m := by
+  exists 0
+  simp
+
+theorem MyInt.le_trans {m n k : MyInt} (hnm : n ≤ m) (hmk : m ≤ k) : n ≤ k := by
+  notation_simp at *
+  obtain ⟨a, ha⟩ := hnm
+  obtain ⟨b, hb⟩ := hmk
+  exists a + b
+  push_cast
+  rw [← MyInt.add_assoc, ha, hb]
+
+instance : Trans (· ≤ · : MyInt → MyInt → Prop) (· ≤ ·) (· ≤ ·) where
+  trans := MyInt.le_trans
+
+instance : Preorder MyInt where
+  le_refl := MyInt.le_refl
+  le_trans := by
+    intro a b c hab hbc
+    apply MyInt.le_trans hab hbc
+
+example (a b c : MyInt) (h1 : a ≤ b) (h2 : b ≤ c) : a ≤ c := by
+  order
+
+example (a b : MyInt) (h1 : a ≤ b) (h2 : ¬ (a < b)) : b ≤ a := by
+  order
